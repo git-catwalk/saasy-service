@@ -51,4 +51,10 @@ public class AppController {
           return this.service.search(searchTerm,PageRequest.of(page,limit));
   }
 
+  @PostMapping(value="/app/{id}/subscribe",produces = MediaType.APPLICATION_JSON_VALUE)
+  public Mono<App> subscribe(@PathVariable("id") String id, @RequestBody Map<String,Object> dto){
+    ObjectMapper mapper = new ObjectMapper();
+    return this.service.save(mapper.convertValue(dto,App.class));
+  }
+
 }

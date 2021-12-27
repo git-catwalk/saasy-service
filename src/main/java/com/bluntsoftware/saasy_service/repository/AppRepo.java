@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AppRepo extends ReactiveMongoRepository<App, String> {
-
+	Flux<App> findAllByOwner(String owner,Pageable pageable);
 	Flux<App> findAllBy(Pageable pageable);
 }

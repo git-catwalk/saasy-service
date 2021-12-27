@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface TenantRepo extends ReactiveMongoRepository<Tenant, String> {
 
 	Flux<Tenant> findAllBy(Pageable pageable);
+	Flux<Tenant> findAllByOwner(String owner, Pageable pageable);
 }

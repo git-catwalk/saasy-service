@@ -14,10 +14,12 @@ import java.util.List;
 @Builder
 @Document
 public class Tenant {
-
 	@Id
 	private String id;
-	private User tenant;
+	private String owner;
+    private User customer;
+	private String displayName;
 	private List<User> users;
-	private Plan plan;
+	private String planId;
+	private IdName app;
 }

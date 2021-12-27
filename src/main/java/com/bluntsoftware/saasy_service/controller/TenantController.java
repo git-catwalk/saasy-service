@@ -2,6 +2,7 @@ package com.bluntsoftware.saasy_service.controller;
 
 import com.bluntsoftware.saasy_service.model.Tenant;
 import com.bluntsoftware.saasy_service.service.TenantService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
@@ -9,7 +10,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.util.Map;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 @RestController
@@ -25,7 +25,9 @@ public class TenantController {
   @PostMapping(value="/tenant",produces = MediaType.APPLICATION_JSON_VALUE)
   public Mono<Tenant> save(@RequestBody Map<String,Object> dto){
     ObjectMapper mapper = new ObjectMapper();
-    return this.service.save(mapper.convertValue(dto,Tenant.class));
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    Tenant tenant = mapper.convertValue(dto,Tenant.class);
+    return this.service.save(tenant);
   }
 
   @GetMapping(value = "/tenant/{id}",produces = MediaType.APPLICATION_JSON_VALUE)
