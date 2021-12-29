@@ -1,8 +1,10 @@
 package com.bluntsoftware.saasy_service.service;
 
 import com.bluntsoftware.saasy_service.model.Tenant;
+import com.bluntsoftware.saasy_service.model.TenantUser;
 import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
+import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.annotation.Secured;
@@ -19,9 +21,11 @@ public class TenantService{
   private final TenantRepo repo;
   private final UserInfoService userInfoService;
 
-  public TenantService(TenantRepo repo, UserInfoService userService) {
+
+  public TenantService(TenantRepo repo, UserInfoService userService ) {
     this.repo = repo;
     this.userInfoService = userService;
+
   }
   void isOwner(User user, String id){
     Tenant current = !StringUtils.isEmpty(id) ? repo.findById(id).block() : null;
@@ -31,7 +35,7 @@ public class TenantService{
   }
   @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Mono<Tenant> save(Tenant item) {
-    var user= userInfoService.getLoggedInUser();
+    User user= userInfoService.getLoggedInUser();
     String id = item.getId();
     isOwner(user,id);
     if(!userInfoService.isAdmin() || id == null){
@@ -57,7 +61,7 @@ public class TenantService{
 
   @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Flux<Tenant> search(String term,Pageable pageable) {
-    var user = userInfoService.getLoggedInUser();
+    User user = userInfoService.getLoggedInUser();
     log.info("create a filter in repo for search term {}",term);
     log.info("create a filter for search term {}",term);
     if(userInfoService.isAdmin()){
@@ -65,5 +69,6 @@ public class TenantService{
     }
     return repo.findAllByOwner(user.getUsername(),pageable);
   }
+
 
 }

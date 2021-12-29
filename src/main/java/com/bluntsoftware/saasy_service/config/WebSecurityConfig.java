@@ -17,8 +17,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Collection;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -54,7 +58,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     private Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
-        var jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtRoleConverter());
         return jwtAuthenticationConverter;
     }
@@ -67,5 +71,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     JwtDecoder jwtDecoder() {
         return new AppAwareJwtDecoder(appRepo, jwkSetUri);
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedMethods( Collections.singletonList( "*" ) );
+        config.setAllowedOrigins( Collections.singletonList( "*" ) );
+        config.setAllowedHeaders( Collections.singletonList( "*" ) );
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration( "/**", config );
+        return source;
     }
 }

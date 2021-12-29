@@ -1,5 +1,6 @@
 package com.bluntsoftware.saasy_service.service;
 
+import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
 import com.bluntsoftware.saasy_service.model.App;
 import org.jeasy.random.EasyRandom;
@@ -16,6 +17,8 @@ import reactor.core.publisher.Mono;
 import org.mockito.Mockito;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+
 
 @ExtendWith(SpringExtension.class)
 @Scope("test")
@@ -27,31 +30,37 @@ class AppServiceTest {
   App item1;
   App item2;
   AppService service;
-
+  @MockBean
+  private UserInfoService userService;
   @BeforeEach
   void before(){
     EasyRandom generator = new EasyRandom();
     item1 = generator.nextObject(App.class);
     item2 = generator.nextObject(App.class);
-    service = new AppService(this.repo);
+    service = new AppService(this.repo, userService);
   }
 
   @Test
   void shouldSave(){
-    Mockito.when(repo.save(Mockito.any(App.class))).thenReturn(Mono.just(item1));
+    Mockito.when(userService.getLoggedInUser()).thenReturn(User.builder().username("test").build());
+    Mockito.when(userService.isAdmin()).thenReturn(true);
+    Mockito.when(repo.save(any(App.class))).thenReturn(Mono.just(item1));
     Mono<App> data = service.save(App.builder().build());
     Assertions.assertEquals(data.block(),item1);
   }
 
   @Test
   void findById(){
-    Mockito.when(repo.findById(Mockito.any(String.class))).thenReturn(Mono.just(item1));
+    Mockito.when(repo.findById(any(String.class))).thenReturn(Mono.just(item1));
+    Mockito.when(userService.isAdmin()).thenReturn(true);
     Assertions.assertNotNull(service.findById(String.valueOf("1")).block());
   }
 
   @Test
   void deleteById(){
-    Mockito.when(repo.deleteById(Mockito.any(String.class))).thenReturn(Mono.empty());
+    Mockito.when(repo.findById(any(String.class))).thenReturn(Mono.just(item1));
+    Mockito.when(userService.isAdmin()).thenReturn(true);
+    Mockito.when(repo.deleteById(any(String.class))).thenReturn(Mono.empty());
     Assertions.assertNull(service.deleteById(String.valueOf("1")).block());
   }
 

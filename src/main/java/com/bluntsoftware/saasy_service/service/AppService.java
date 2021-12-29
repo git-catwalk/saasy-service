@@ -31,7 +31,7 @@ public class AppService{
   }
   @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Mono<App> save(App item) {
-    var user = userService.getLoggedInUser();
+    User user = userService.getLoggedInUser();
     String id = item.getId();
     isOwner(user,id);
     if(!userService.isAdmin() || id == null){
@@ -57,7 +57,7 @@ public class AppService{
 
   @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Flux<App> search(String term,Pageable pageable) {
-    var user = userService.getLoggedInUser();
+    User user = userService.getLoggedInUser();
     log.info("create a filter for search term {}",term);
     if(userService.isAdmin()){
       return repo.findAllBy(pageable);

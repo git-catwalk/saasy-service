@@ -4,6 +4,7 @@ import com.bluntsoftware.saasy_service.model.App;
 import com.bluntsoftware.saasy_service.model.Roles;
 import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +26,7 @@ public class UserInfoService {
     }
 
     public User getLoggedInUser(){
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication.getPrincipal();
         if(principal instanceof Jwt) {
             return getUser((Jwt)principal);
