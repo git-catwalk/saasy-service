@@ -2,17 +2,7 @@ package com.bluntsoftware.saasy_service.utils;
 
 import com.bluntsoftware.saasy_service.model.App;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.JWTParser;
 import org.springframework.security.oauth2.jwt.*;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.servlet.http.HttpServletRequest;
-import java.text.ParseException;
-import java.util.Map;
 
 public class AppAwareJwtDecoder implements JwtDecoder {
 private final AppRepo appRepo;
@@ -25,29 +15,18 @@ private final AppRepo appRepo;
 
     @Override
     public Jwt decode(String token) throws JwtException {
-        return selectDecoder(token).decode(token);
+        String APP_ID_KEY = "SASSYAPPID";
+        String[] appToken = token.split(APP_ID_KEY);
+        return selectDecoder(appToken.length > 1?appToken[1]:null).decode(appToken[0]);
     }
 
-    private JwtDecoder selectDecoder(String token)   {
-        /* try {
-           RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-            if(requestAttributes != null){
-                HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
-                System.out.println(request.getHeader("tenant"));
-            }*/
-/*
-            JWT jwt = JWTParser.parse(token);
-            JWTClaimsSet claimsSet =  jwt.getJWTClaimsSet();
-            Map<String, Object> claims =  claimsSet.getClaims();
-            if(claims.containsKey("appId")){
-                App app = appRepo.findById(claims.get("appId").toString()).block();
-                if(app != null && app.getJwkSetUri() != null && !app.getJwkSetUri().isEmpty()){
-                    return NimbusJwtDecoder.withJwkSetUri(app.getJwkSetUri()).build();
-                }
+    private JwtDecoder selectDecoder( String appId)   {
+        if(appId != null){
+            App app = appRepo.findById(appId).block();
+            if(app != null && app.getJwkSetUri() != null && !app.getJwkSetUri().isEmpty()){
+                return NimbusJwtDecoder.withJwkSetUri(app.getJwkSetUri()).build();
             }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        } */
+        }
         return defaultJwtDecoder;
     }
 

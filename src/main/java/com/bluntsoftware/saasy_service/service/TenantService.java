@@ -1,17 +1,14 @@
 package com.bluntsoftware.saasy_service.service;
 
 import com.bluntsoftware.saasy_service.model.Tenant;
-import com.bluntsoftware.saasy_service.model.TenantUser;
 import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
-import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
 import org.springframework.data.domain.Pageable;
 
 @Slf4j
@@ -20,7 +17,6 @@ public class TenantService{
 
   private final TenantRepo repo;
   private final UserInfoService userInfoService;
-
 
   public TenantService(TenantRepo repo, UserInfoService userService ) {
     this.repo = repo;
@@ -69,6 +65,4 @@ public class TenantService{
     }
     return repo.findAllByOwner(user.getUsername(),pageable);
   }
-
-
 }

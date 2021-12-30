@@ -3,6 +3,7 @@ package com.bluntsoftware.saasy_service.config;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
 import com.bluntsoftware.saasy_service.service.UserInfoService;
 import com.bluntsoftware.saasy_service.utils.AppAwareJwtDecoder;
+import com.bluntsoftware.saasy_service.utils.JwtRoleConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,7 +66,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     Converter<Jwt, Collection<GrantedAuthority>> jwtRoleConverter(){
-        return userService::getRoles;
+        return new JwtRoleConverter();
     }
 
     @Bean

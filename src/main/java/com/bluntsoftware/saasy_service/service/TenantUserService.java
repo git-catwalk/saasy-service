@@ -1,8 +1,10 @@
 package com.bluntsoftware.saasy_service.service;
 
 import com.bluntsoftware.saasy_service.exception.BadRequestException;
+import com.bluntsoftware.saasy_service.model.Tenant;
 import com.bluntsoftware.saasy_service.model.TenantUser;
 import com.bluntsoftware.saasy_service.model.User;
+import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -11,23 +13,27 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Service
 public class TenantUserService {
     private final TenantUserRepo repo;
     private final UserInfoService userInfoService;
+    private final TenantRepo tenantRepo;
 
-    public TenantUserService(TenantUserRepo repo, UserInfoService userInfoService) {
+    public TenantUserService(TenantUserRepo repo, UserInfoService userInfoService, TenantRepo tenantRepo) {
         this.repo = repo;
         this.userInfoService = userInfoService;
-
-
+        this.tenantRepo = tenantRepo;
     }
 
     public Mono<TenantUser> save(TenantUser tenantUser) {
         User user= userInfoService.getLoggedInUser();
         String tenantId = tenantUser.getTenantId();
         String userEmail = tenantUser.getEmail();
+
         if(tenantId == null || tenantId.isEmpty()) {
             throw new BadRequestException( "Tenant ID is required");
         }
@@ -40,6 +46,7 @@ public class TenantUserService {
         if(current != null && !current.getId().equalsIgnoreCase(tenantUser.getId())){
             throw new BadRequestException("Tenant User already exists");
         }
+
         return repo.save(tenantUser);
     }
 
@@ -65,6 +72,12 @@ public class TenantUserService {
 
     public Flux<TenantUser> searchByTenant(String tenantId, Pageable pageable) {
         return repo.findAllByTenantId(tenantId,pageable);
+    }
+
+    public Flux<Tenant> findMyTenants() {
+        User user = userInfoService.getLoggedInUser();
+        List<String> tenantIds = repo.findAllByEmail(user.getEmail()).map(TenantUser::getTenantId).collectList().block();
+        return tenantRepo.findAllById(tenantIds != null? tenantIds:new ArrayList<>());
     }
 
 }
