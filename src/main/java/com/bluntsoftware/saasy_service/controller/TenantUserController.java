@@ -1,7 +1,5 @@
 package com.bluntsoftware.saasy_service.controller;
 
-import com.bluntsoftware.saasy_service.model.IdName;
-import com.bluntsoftware.saasy_service.model.Tenant;
 import com.bluntsoftware.saasy_service.model.TenantUser;
 import com.bluntsoftware.saasy_service.service.TenantUserService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -56,11 +54,4 @@ public class TenantUserController {
         return this.service.searchByTenant(tenantId, PageRequest.of(page,limit));
     }
 
-    @ResponseBody
-    @PostMapping(value = {"/my-tenants"}, produces = { "application/json" })
-    public Flux<IdName> findMyTenants(@RequestBody Map<String,Object> info){
-        return this.service.findMyTenants()
-                .filter(p->p.getApp().getId().equalsIgnoreCase(info.get("appId").toString()))
-                .map(t->IdName.builder().id(t.getId()).name(t.getDisplayName()).build());
-    }
 }

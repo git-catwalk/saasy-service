@@ -1,8 +1,11 @@
 package com.bluntsoftware.saasy_service.service;
 
+import com.bluntsoftware.saasy_service.model.Roles;
 import com.bluntsoftware.saasy_service.model.Tenant;
+import com.bluntsoftware.saasy_service.model.TenantUser;
 import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
+import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.annotation.Secured;
@@ -17,18 +20,29 @@ public class TenantService{
 
   private final TenantRepo repo;
   private final UserInfoService userInfoService;
+  private final TenantUserRepo tenantUserRepo;
 
-  public TenantService(TenantRepo repo, UserInfoService userService ) {
+  public TenantService(TenantRepo repo, UserInfoService userService, TenantUserRepo tenantUserRepo) {
     this.repo = repo;
     this.userInfoService = userService;
-
+    this.tenantUserRepo = tenantUserRepo;
   }
+
   void isOwner(User user, String id){
     Tenant current = !StringUtils.isEmpty(id) ? repo.findById(id).block() : null;
-    if (current != null && !userInfoService.isAdmin() && !user.getUsername().equalsIgnoreCase(current.getOwner())) {
-      throw new RuntimeException("Unauthorized to edit this request");
+    if (current != null){
+      //is tenant owner
+      if(current.getCustomer().getEmail().equalsIgnoreCase(user.getEmail())){
+        return;
+      }else if(userInfoService.hasRole(Roles.TENANT_USER)){
+        throw new RuntimeException("Unauthorized to edit this request");
+      }
+      if (!userInfoService.isAdmin() && !user.getUsername().equalsIgnoreCase(current.getOwner())) {
+        throw new RuntimeException("Unauthorized to edit this request");
+      }
     }
   }
+
   @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Mono<Tenant> save(Tenant item) {
     User user= userInfoService.getLoggedInUser();
@@ -37,9 +51,22 @@ public class TenantService{
     if(!userInfoService.isAdmin() || id == null){
       item.setOwner(user.getUsername());
     }
-    return repo.save(item);
+    Tenant t = repo.save(item).block();
+    User customer = t.getCustomer();
+    TenantUser  tenantCustomer = tenantUserRepo.findByTenantIdAndEmail(t.getId(),customer.getEmail()).block();
+    if(tenantCustomer == null){
+      TenantUser tu = TenantUser.builder()
+              .tenantId(t.getId())
+              .email(customer.getEmail())
+              .name(customer.getName())
+              .active(customer.getActive())
+              .isCustomer(true)
+              .roles(customer.getRoles()).build();
+      tu = tenantUserRepo.save(tu).block();
+    }
+    return Mono.just(t);
   }
-
+  @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Mono<Void> deleteById(String id) {
      isOwner(userInfoService.getLoggedInUser(),id);
     return repo.deleteById(id);
@@ -58,8 +85,6 @@ public class TenantService{
   @Secured({"ROLE_SAASY_ADMIN","ROLE_SAASY_USER"})
   public Flux<Tenant> search(String term,Pageable pageable) {
     User user = userInfoService.getLoggedInUser();
-    log.info("create a filter in repo for search term {}",term);
-    log.info("create a filter for search term {}",term);
     if(userInfoService.isAdmin()){
       return repo.findAllBy(pageable);
     }

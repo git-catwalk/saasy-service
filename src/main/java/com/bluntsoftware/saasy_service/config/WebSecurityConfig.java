@@ -1,7 +1,8 @@
 package com.bluntsoftware.saasy_service.config;
 
+import com.bluntsoftware.saasy_service.model.Roles;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
-import com.bluntsoftware.saasy_service.service.UserInfoService;
+import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.utils.AppAwareJwtDecoder;
 import com.bluntsoftware.saasy_service.utils.JwtRoleConverter;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,11 +37,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
     String jwkSetUri;
     private final AppRepo appRepo;
-    private final UserInfoService userService;
+    private final TenantRepo tenantRepo;
 
-    public WebSecurityConfig(AppRepo appRepo, UserInfoService userService) {
+    public WebSecurityConfig(AppRepo appRepo, TenantRepo tenantRepo) {
         this.appRepo = appRepo;
-        this.userService = userService;
+        this.tenantRepo = tenantRepo;
     }
 
     @Override
@@ -48,6 +49,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.cors()
                 .and()
                 .authorizeRequests()
+                .antMatchers("/api/v1/**").authenticated()
                 .antMatchers("/rest/**").authenticated()
                 .anyRequest()
                 .permitAll()
@@ -66,7 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     Converter<Jwt, Collection<GrantedAuthority>> jwtRoleConverter(){
-        return new JwtRoleConverter();
+        return new JwtRoleConverter(tenantRepo);
     }
 
     @Bean

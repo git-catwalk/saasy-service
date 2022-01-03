@@ -1,9 +1,7 @@
 package com.bluntsoftware.saasy_service.controller;
 
 import com.bluntsoftware.saasy_service.model.App;
-import com.bluntsoftware.saasy_service.model.Tenant;
 import com.bluntsoftware.saasy_service.service.AppService;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
@@ -11,7 +9,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.util.Map;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 @RestController
@@ -51,18 +48,5 @@ public class AppController {
                              @RequestParam(value = "page",  defaultValue = "0") Integer page,
                              @RequestParam(value = "limit", defaultValue = "50") Integer limit){
           return this.service.search(searchTerm,PageRequest.of(page,limit));
-  }
-
-  @PostMapping(value="/app/{id}/subscribe",produces = MediaType.APPLICATION_JSON_VALUE)
-  public Mono<Tenant> subscribe(@PathVariable("id") String id, @RequestBody Map<String,Object> dto){
-    ObjectMapper mapper = new ObjectMapper();
-    return Mono.empty();
-  }
-
-  @PostMapping(value="/app/{id}/register",produces = MediaType.APPLICATION_JSON_VALUE)
-  public Mono<Tenant> register(@PathVariable("id") String appId, @RequestBody Map<String,Object> dto){
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    return Mono.empty();
   }
 }

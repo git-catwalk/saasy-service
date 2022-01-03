@@ -28,9 +28,20 @@ public class TenantUserService {
         this.userInfoService = userInfoService;
         this.tenantRepo = tenantRepo;
     }
+    public Mono<TenantUser> update(TenantUser tenantUser) {
+        Mono<TenantUser> mono = repo.findById(tenantUser.getId());
+         TenantUser  current = mono.block();
+         if(current != null){
+             current.setAvatar(tenantUser.getAvatar());
+             current.setName(tenantUser.getName());
+             current.getOtherInfo().putAll(tenantUser.getOtherInfo());
+             return save(current);
+         }
+        return mono;
+    }
 
     public Mono<TenantUser> save(TenantUser tenantUser) {
-        User user= userInfoService.getLoggedInUser();
+
         String tenantId = tenantUser.getTenantId();
         String userEmail = tenantUser.getEmail();
 
@@ -78,6 +89,11 @@ public class TenantUserService {
         User user = userInfoService.getLoggedInUser();
         List<String> tenantIds = repo.findAllByEmail(user.getEmail()).map(TenantUser::getTenantId).collectList().block();
         return tenantRepo.findAllById(tenantIds != null? tenantIds:new ArrayList<>());
+    }
+
+    public Mono<TenantUser> findMe(String tenantId) {
+        User user = userInfoService.getLoggedInUser();
+        return repo.findByTenantIdAndEmail(tenantId,user.getEmail());
     }
 
 }

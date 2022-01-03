@@ -27,7 +27,8 @@ class TenantServiceTest {
 
   @MockBean
   private TenantRepo repo;
-
+  @MockBean
+  private TenantUserRepo tenantUserRepo;
   Tenant item1;
   Tenant item2;
   TenantService service;
@@ -38,7 +39,7 @@ class TenantServiceTest {
     EasyRandom generator = new EasyRandom();
     item1 = generator.nextObject(Tenant.class);
     item2 = generator.nextObject(Tenant.class);
-    service = new TenantService(this.repo,userService);
+    service = new TenantService(this.repo,userService, tenantUserRepo);
   }
 
   @Test

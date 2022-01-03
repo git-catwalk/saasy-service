@@ -2,6 +2,7 @@ package com.bluntsoftware.saasy_service.service;
 
 import com.bluntsoftware.saasy_service.model.Roles;
 import com.bluntsoftware.saasy_service.model.User;
+import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.utils.JwtRoleConverter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,6 +14,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserInfoService {
+    private final TenantRepo tenantRepo;
+
+    public UserInfoService(TenantRepo tenantRepo) {
+        this.tenantRepo = tenantRepo;
+    }
 
     public User getLoggedInUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -24,7 +30,7 @@ public class UserInfoService {
     }
 
     public Collection<GrantedAuthority> getRoles(Jwt jwt){
-        JwtRoleConverter converter = new JwtRoleConverter();
+        JwtRoleConverter converter = new JwtRoleConverter(this.tenantRepo);
         return converter.convert(jwt);
     }
 
