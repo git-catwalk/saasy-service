@@ -47,6 +47,4 @@ public class SaasyApiService {
         User user = userInfoService.getLoggedInUser();
         return tenantUserRepo.findByTenantIdAndEmail(tenantId,user.getEmail());
     }
-
-
 }
