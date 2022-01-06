@@ -19,7 +19,7 @@ public class Tenant {
 	private String owner;
     private User customer;
 	private String displayName;
-	private List<User> users;
+	private List<User> users; // do we need this ?
 	private String planId;
 	private IdName app;
 }

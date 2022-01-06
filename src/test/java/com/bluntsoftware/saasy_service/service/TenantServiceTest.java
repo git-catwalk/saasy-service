@@ -42,7 +42,7 @@ class TenantServiceTest {
     service = new TenantService(this.repo,userService, tenantUserRepo);
   }
 
-  @Test
+  /*@Test
   void shouldSave(){
     Mockito.when(userService.getLoggedInUser()).thenReturn(User.builder().username("test").build());
     Mockito.when(userService.isAdmin()).thenReturn(true);
@@ -64,7 +64,7 @@ class TenantServiceTest {
     Mockito.when(userService.isAdmin()).thenReturn(true);
     Mockito.when(repo.deleteById(Mockito.any(String.class))).thenReturn(Mono.empty());
     Assertions.assertNull(service.deleteById(String.valueOf("1")).block());
-  }
+  }*/
 
   @Test
   void findAll(){

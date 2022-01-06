@@ -1,9 +1,7 @@
 package com.bluntsoftware.saasy_service.service;
 
 import com.bluntsoftware.saasy_service.exception.BadRequestException;
-import com.bluntsoftware.saasy_service.model.Tenant;
 import com.bluntsoftware.saasy_service.model.TenantUser;
-import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +11,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Slf4j
 @Service
+@Secured({"ROLE_SAASY_USER","ROLE_SAASY_ADMIN"})
 public class TenantUserService {
     private final TenantUserRepo repo;
     private final UserInfoService userInfoService;
@@ -28,17 +24,7 @@ public class TenantUserService {
         this.userInfoService = userInfoService;
         this.tenantRepo = tenantRepo;
     }
-    public Mono<TenantUser> update(TenantUser tenantUser) {
-        Mono<TenantUser> mono = repo.findById(tenantUser.getId());
-         TenantUser  current = mono.block();
-         if(current != null){
-             current.setAvatar(tenantUser.getAvatar());
-             current.setName(tenantUser.getName());
-             current.getOtherInfo().putAll(tenantUser.getOtherInfo());
-             return save(current);
-         }
-        return mono;
-    }
+
 
     public Mono<TenantUser> save(TenantUser tenantUser) {
 
@@ -85,7 +71,7 @@ public class TenantUserService {
         return repo.findAllByTenantId(tenantId,pageable);
     }
 
-    public Flux<Tenant> findMyTenants() {
+   /* public Flux<Tenant> findMyTenants() {
         User user = userInfoService.getLoggedInUser();
         List<String> tenantIds = repo.findAllByEmail(user.getEmail()).map(TenantUser::getTenantId).collectList().block();
         return tenantRepo.findAllById(tenantIds != null? tenantIds:new ArrayList<>());
@@ -94,6 +80,6 @@ public class TenantUserService {
     public Mono<TenantUser> findMe(String tenantId) {
         User user = userInfoService.getLoggedInUser();
         return repo.findByTenantIdAndEmail(tenantId,user.getEmail());
-    }
+    }*/
 
 }

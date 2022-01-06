@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
+@Secured({"ROLE_SAASY_USER","ROLE_SAASY_ADMIN"})
 public class TenantService{
 
   private final TenantRepo repo;
