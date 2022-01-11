@@ -1,7 +1,9 @@
 package com.bluntsoftware.saasy_service.service;
 
 import com.bluntsoftware.saasy_service.exception.BadRequestException;
+import com.bluntsoftware.saasy_service.model.Tenant;
 import com.bluntsoftware.saasy_service.model.TenantUser;
+import com.bluntsoftware.saasy_service.model.User;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import lombok.extern.slf4j.Slf4j;
@@ -71,15 +73,5 @@ public class TenantUserService {
         return repo.findAllByTenantId(tenantId,pageable);
     }
 
-   /* public Flux<Tenant> findMyTenants() {
-        User user = userInfoService.getLoggedInUser();
-        List<String> tenantIds = repo.findAllByEmail(user.getEmail()).map(TenantUser::getTenantId).collectList().block();
-        return tenantRepo.findAllById(tenantIds != null? tenantIds:new ArrayList<>());
-    }
-
-    public Mono<TenantUser> findMe(String tenantId) {
-        User user = userInfoService.getLoggedInUser();
-        return repo.findByTenantIdAndEmail(tenantId,user.getEmail());
-    }*/
 
 }

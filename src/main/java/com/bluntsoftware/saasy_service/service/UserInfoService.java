@@ -54,4 +54,7 @@ public class UserInfoService {
     public boolean isUser(){
         return hasRole(Roles.USER);
     }
+
+
+
 }

@@ -7,6 +7,7 @@ import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import com.braintreegateway.*;
 import lombok.extern.java.Log;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -15,25 +16,33 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @Log
+@Secured({"ROLE_TENANT_USER"})
 public class BraintreePaymentServiceImpl implements PaymentService {
 
     private final BraintreePaymentRepository braintreeRepository;
     private final TenantRepo tenantRepo;
     private final TenantUserRepo tenantUserRepo;
     private final AppRepo appRepo;
-    public BraintreePaymentServiceImpl(BraintreePaymentRepository braintreeRepository, TenantRepo tenantRepo, TenantUserRepo tenantUserRepo, AppRepo appRepo) {
+    private final TenantUserInfoService tenantUserInfoService;
+    public BraintreePaymentServiceImpl(BraintreePaymentRepository braintreeRepository, TenantRepo tenantRepo, TenantUserRepo tenantUserRepo, AppRepo appRepo, TenantUserInfoService tenantUserInfoService) {
         this.braintreeRepository = braintreeRepository;
         this.tenantRepo = tenantRepo;
         this.tenantUserRepo = tenantUserRepo;
         this.appRepo = appRepo;
+        this.tenantUserInfoService = tenantUserInfoService;
     }
+
+
+
 
     public String generateClientToken() {
         return braintreeRepository.generateClientToken();
     }
 
     private Optional<Customer> createCustomer(Tenant tenant, String nonce) {
-
+        if(!this.tenantUserInfoService.isTenant(tenant.getId())){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         String[] firstLast = tenant.getCustomer().getName().split( " ");
 
         CustomerRequest customerRequest = new CustomerRequest()
@@ -68,6 +77,9 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     }
 
     private Subscription createSubscription(String tenantId,String planId, PaymentMethod defaultPaymentMethod) {
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         Subscription subscription = null;
         Integer days = this.calculateDaysForCanceledSubscriptions(tenantId);
         Calendar c = Calendar.getInstance();
@@ -112,6 +124,9 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     }
 
     Optional<Customer> createCustomer(String tenantId){
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         Tenant tenant = this.tenantRepo.findById(tenantId).block();
         return createCustomer(tenant,null);
     }
@@ -125,12 +140,18 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     };
 
     public List<PaymentMethod> setDefaultPaymentMethod(String tenantId,String paymentMethodToken){
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         CustomerRequest cr = new CustomerRequest().defaultPaymentMethodToken(paymentMethodToken);
         braintreeRepository.gateway().customer().update(tenantId,cr);
         return getPaymentMethods(tenantId);
     }
 
     PaymentMethod createPaymentMethod(String tenantId, String nonce){
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         PaymentMethodRequest pmr = new PaymentMethodRequest();
         pmr.paymentMethodNonce(nonce);
         pmr.customerId(tenantId);
@@ -138,6 +159,9 @@ public class BraintreePaymentServiceImpl implements PaymentService {
         return pm.getTarget();
     }
     public List<PaymentMethod> removePaymentMethod(String tenantId,String paymentMethodToken){
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         braintreeRepository.gateway().paymentMethod().delete(paymentMethodToken);
         Customer customer = getCustomerByTenantId(tenantId)
                 .orElseGet(()-> createCustomer(tenantId)
@@ -146,6 +170,7 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     };
 
     private Result<Subscription> cancelSubscription(Subscription subscription){
+
         Result<Subscription> subscriptionResult = null;
         if(subscription != null){
             subscriptionResult = braintreeRepository.gateway().subscription().cancel(subscription.getId());
@@ -154,6 +179,9 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     }
 
     public Result<Subscription> cancelSubscription(String tenantId){
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         Optional<Subscription> subscription = getSubscriptionByTenantId(tenantId);
         AtomicReference<Result<Subscription>> result = new AtomicReference<>();
         subscription.ifPresent((s)-> result.set(cancelSubscription(s)));
@@ -196,6 +224,9 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     }
 
     public Optional<Subscription> getSubscriptionByTenantId(String tenantId){
+        if(!this.tenantUserInfoService.isTenantUser(tenantId)){
+            throw new RuntimeException("You dont have permission to do this");
+        }
         List<Subscription> subscriptionList = subscriptionsByTenantId(tenantId);
         if(subscriptionList != null && subscriptionList.size() > 0){
             return subscriptionsByTenantId(tenantId).stream()
@@ -211,6 +242,7 @@ public class BraintreePaymentServiceImpl implements PaymentService {
 
     @Override
     public Optional<Subscription> createSubscription(SaasySubscription sr) {
+
         App app = this.appRepo.findById(sr.getAppId()).block();
         Tenant tenant = Tenant.builder()
                         .customer(User.builder()
@@ -252,6 +284,9 @@ public class BraintreePaymentServiceImpl implements PaymentService {
 
     @Override
     public Optional<Subscription> updateSubscription(String tenantId,SaasySubscription sr) {
+        if(!this.tenantUserInfoService.isTenant(tenantId)){
+            throw new RuntimeException("You don thave permission to do this");
+        }
 
         if(tenantId == null || tenantId.equalsIgnoreCase("")){
             throw new RuntimeException("A Tenant Id is Required to update a subscription");
