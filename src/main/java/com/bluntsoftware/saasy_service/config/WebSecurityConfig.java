@@ -1,6 +1,5 @@
 package com.bluntsoftware.saasy_service.config;
 
-import com.bluntsoftware.saasy_service.model.Roles;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.utils.AppAwareJwtDecoder;
@@ -49,6 +48,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http.cors()
                 .and()
                 .authorizeRequests()
+                .antMatchers("/api/v1/public/**").permitAll()
                 .antMatchers("/api/v1/**").authenticated()
                 .antMatchers("/rest/**").authenticated()
                 .anyRequest()

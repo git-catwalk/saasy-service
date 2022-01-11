@@ -22,4 +22,5 @@ public class Tenant {
 	private List<User> users; // do we need this ?
 	private String planId;
 	private IdName app;
+	private String subscriptionId;
 }

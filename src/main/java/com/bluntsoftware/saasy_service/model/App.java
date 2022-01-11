@@ -23,4 +23,5 @@ public class App {
 	private String jwkSetUri;
 	private List<Plan> plans;
 	private List<String> roles;
+	private Braintree braintree;
 }

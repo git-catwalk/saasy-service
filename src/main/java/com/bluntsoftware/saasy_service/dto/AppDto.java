@@ -1,5 +1,6 @@
-package com.bluntsoftware.saasy_service.model;
+package com.bluntsoftware.saasy_service.dto;
 
+import com.bluntsoftware.saasy_service.model.Plan;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

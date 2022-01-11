@@ -18,4 +18,6 @@ public class Plan {
 	private BigDecimal monthly;
 	private BigDecimal yearly;
 	private List<String> features;
+	private String buttonTitle;
+	private String payUrl;
 }
