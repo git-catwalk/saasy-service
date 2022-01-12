@@ -1,11 +1,14 @@
 package com.bluntsoftware.saasy_service.service;
 
+import com.bluntsoftware.saasy_service.dto.PaymentMethodDto;
+import com.bluntsoftware.saasy_service.dto.TransactionDto;
 import com.bluntsoftware.saasy_service.model.*;
 import com.bluntsoftware.saasy_service.repository.AppRepo;
 import com.bluntsoftware.saasy_service.repository.BraintreePaymentRepository;
 import com.bluntsoftware.saasy_service.repository.TenantRepo;
 import com.bluntsoftware.saasy_service.repository.TenantUserRepo;
 import com.braintreegateway.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.java.Log;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Service
 @Log
@@ -31,9 +35,6 @@ public class BraintreePaymentServiceImpl implements PaymentService {
         this.appRepo = appRepo;
         this.tenantUserInfoService = tenantUserInfoService;
     }
-
-
-
 
     public String generateClientToken() {
         return braintreeRepository.generateClientToken();
@@ -132,14 +133,40 @@ public class BraintreePaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public List<PaymentMethod> getPaymentMethods(String tenantId){
+    public List<PaymentMethodDto> getPaymentMethods(String tenantId){
+        Customer customer = getCustomerByTenantId(tenantId)
+                .orElseGet(()-> createCustomer(tenantId)
+                        .orElseThrow(()-> new RuntimeException("Cannot create customer account")));
+        return new ArrayList<>(getPaymentMethods(customer));
+    }
+
+    private List<PaymentMethod> listPaymentMethods(String tenantId){
         Customer customer = getCustomerByTenantId(tenantId)
                 .orElseGet(()-> createCustomer(tenantId)
                         .orElseThrow(()-> new RuntimeException("Cannot create customer account")));
         return new ArrayList<>(customer.getPaymentMethods());
-    };
+    }
 
-    public List<PaymentMethod> setDefaultPaymentMethod(String tenantId,String paymentMethodToken){
+    private List<PaymentMethodDto> getPaymentMethods(Customer customer){
+        return customer.getPaymentMethods().stream().map(this::convert)
+                .collect(Collectors.toList());
+    }
+
+    private PaymentMethodDto convert(PaymentMethod paymentMethod){
+        ObjectMapper mapper = new ObjectMapper();
+        PaymentMethodDto pmDto =  mapper.convertValue(paymentMethod,PaymentMethodDto.class);
+
+        if(pmDto != null && pmDto.getMethodInfo().containsKey("subscriptions")){
+            pmDto.getMethodInfo().remove("subscriptions");
+        }
+
+        if(pmDto != null && pmDto.getMethodInfo().containsKey("verification")){
+            pmDto.getMethodInfo().remove("verification");
+        }
+        return pmDto;
+    }
+
+    public List<PaymentMethodDto> setDefaultPaymentMethod(String tenantId,String paymentMethodToken){
         if(!this.tenantUserInfoService.isTenant(tenantId)){
             throw new RuntimeException("You dont have permission to do this");
         }
@@ -158,7 +185,7 @@ public class BraintreePaymentServiceImpl implements PaymentService {
         Result<? extends PaymentMethod> pm = braintreeRepository.gateway().paymentMethod().create(pmr);
         return pm.getTarget();
     }
-    public List<PaymentMethod> removePaymentMethod(String tenantId,String paymentMethodToken){
+    public List<PaymentMethodDto> removePaymentMethod(String tenantId,String paymentMethodToken){
         if(!this.tenantUserInfoService.isTenant(tenantId)){
             throw new RuntimeException("You dont have permission to do this");
         }
@@ -166,7 +193,7 @@ public class BraintreePaymentServiceImpl implements PaymentService {
         Customer customer = getCustomerByTenantId(tenantId)
                 .orElseGet(()-> createCustomer(tenantId)
                         .orElseThrow(()-> new RuntimeException("Cannot create customer account")));
-        return new ArrayList<>(customer.getPaymentMethods());
+        return new ArrayList<>(getPaymentMethods(customer));
     };
 
     private Result<Subscription> cancelSubscription(Subscription subscription){
@@ -219,7 +246,7 @@ public class BraintreePaymentServiceImpl implements PaymentService {
 
     List<Subscription> subscriptionsByTenantId(String tenantId){
         List<Subscription> subscriptions = new ArrayList<>();
-        getPaymentMethods(tenantId).forEach((pm)-> subscriptions.addAll(pm.getSubscriptions()));
+        listPaymentMethods(tenantId).forEach((pm)-> subscriptions.addAll(pm.getSubscriptions()));
         return subscriptions;
     }
 
@@ -237,8 +264,6 @@ public class BraintreePaymentServiceImpl implements PaymentService {
         }
         return Optional.empty();
     }
-
-
 
     @Override
     public Optional<Subscription> createSubscription(SaasySubscription sr) {
@@ -340,10 +365,17 @@ public class BraintreePaymentServiceImpl implements PaymentService {
         return Optional.ofNullable(subscription);
     }
 
-    public List<Transaction> getTransactionHistory(String tenantId){
-        List<Transaction> ret = new ArrayList<>();
+    public List<TransactionDto> getTransactionHistory(String tenantId){
+        List<TransactionDto> ret = new ArrayList<>();
         TransactionSearchRequest query = new TransactionSearchRequest().customerId().is(tenantId);
-        braintreeRepository.gateway().transaction().search(query).forEach(ret::add);
+        braintreeRepository.gateway().transaction().search(query).forEach(
+                t-> ret.add( TransactionDto.builder()
+                            .createdAt(t.getCreatedAt())
+                            .processorResponseText(t.getProcessorResponseText())
+                            .creditCard(convert(t.getCreditCard()))
+                                .amount(t.getAmount())
+                        .build())
+        );
         return ret;
     }
 

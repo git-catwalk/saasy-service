@@ -1,12 +1,12 @@
 package com.bluntsoftware.saasy_service.controller;
 
+import com.bluntsoftware.saasy_service.dto.PaymentMethodDto;
+import com.bluntsoftware.saasy_service.dto.TransactionDto;
 import com.bluntsoftware.saasy_service.model.SaasySubscription;
 import com.bluntsoftware.saasy_service.service.BraintreePaymentServiceImpl;
 import com.bluntsoftware.saasy_service.service.PaymentService;
-import com.braintreegateway.PaymentMethod;
 import com.braintreegateway.Result;
 import com.braintreegateway.Subscription;
-import com.braintreegateway.Transaction;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -69,21 +69,21 @@ public class PaymentController {
     }
 
     @GetMapping("/cards/{tenantId}")
-    public List<PaymentMethod> getPaymentMethods(@PathVariable("tenantId") String tenantId){
+    public List<PaymentMethodDto> getPaymentMethods(@PathVariable("tenantId") String tenantId){
           return this.paymentService.getPaymentMethods(tenantId);
     }
 
     @GetMapping("/default/{tenantId}/{token}")
-    public List<PaymentMethod> defaultPaymentMethods(@PathVariable("tenantId") String tenantId,@PathVariable("token") String token){
+    public List<PaymentMethodDto> defaultPaymentMethods(@PathVariable("tenantId") String tenantId,@PathVariable("token") String token){
         return this.paymentService.setDefaultPaymentMethod(tenantId,token);
     }
 
     @DeleteMapping("/cards/{tenantId}/{token}")
-    public List<PaymentMethod> getPaymentMethods(@PathVariable("tenantId") String tenantId,@PathVariable("token") String token){
+    public List<PaymentMethodDto> getPaymentMethods(@PathVariable("tenantId") String tenantId,@PathVariable("token") String token){
         return this.paymentService.removePaymentMethod(tenantId,token);
     }
     @GetMapping("/transaction/history/{tenantId}")
-    public List<Transaction> getTranasctionHistory(@PathVariable("tenantId") String tenantId){
+    public List<TransactionDto> getTranasctionHistory(@PathVariable("tenantId") String tenantId){
         return this.paymentService.getTransactionHistory(tenantId);
     }
 }
