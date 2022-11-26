@@ -32,7 +32,6 @@ public class AppAwareJwtDecoder implements JwtDecoder {
         }
     }
 
-
     @SneakyThrows
     @Override
     public Jwt decode(String token) throws JwtException {
@@ -42,7 +41,14 @@ public class AppAwareJwtDecoder implements JwtDecoder {
         if(appId == null){
             JWT jwt = JWTParser.parse(token);
             Map<String, Object> claims = jwt.getJWTClaimsSet().getClaims();
-            if(claims.containsKey("appId")){
+            if(claims.containsKey("iss")){
+                String issuer = claims.get("iss").toString();
+                App app = appRepo.findAppByJwkSetUriStartsWith(issuer).block();
+                if(app != null){
+                    appId = app.getId();
+                }
+            }
+            if(appId == null && claims.containsKey("appId")){
                 appId = claims.get("appId").toString();
             }
         }
