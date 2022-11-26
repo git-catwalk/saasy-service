@@ -31,37 +31,34 @@ public class AppAwareJwtDecoder implements JwtDecoder {
             this.appId = appId;
         }
     }
-
     @SneakyThrows
     @Override
     public Jwt decode(String token) throws JwtException {
-        String APP_ID_KEY = "SASSYAPPID";
-        String[] appToken = token.split(APP_ID_KEY);
-        String appId = appToken.length > 1?appToken[1]:null;
-        if(appId == null){
-            JWT jwt = JWTParser.parse(token);
-            Map<String, Object> claims = jwt.getJWTClaimsSet().getClaims();
-            if(claims.containsKey("iss")){
-                String issuer = claims.get("iss").toString();
-                App app = appRepo.findAppByJwkSetUriStartsWith(issuer).block();
-                if(app != null){
-                    appId = app.getId();
-                }
-            }
+        App app = null;
+        JWT jwt = JWTParser.parse(token);
+        Map<String, Object> claims = jwt.getJWTClaimsSet().getClaims();
+        if(claims.containsKey("iss")){
+            String issuer = claims.get("iss").toString();
+             app = appRepo.findAppByJwkSetUriStartsWith(issuer).block();
+        }
+        if(app == null){
+            String APP_ID_KEY = "SASSYAPPID";
+            String[] appToken = token.split(APP_ID_KEY);
+            token = appToken[0];
+            String appId = appToken.length > 1?appToken[1]:null;
             if(appId == null && claims.containsKey("appId")){
-                appId = claims.get("appId").toString();
+               appId = claims.get("appId").toString();
+            }
+            if(appId != null){
+                app = appRepo.findById(appId).block();
             }
         }
-        Jwt jwt = selectDecoder(appId).decode(appToken[0]);
-        return new SaasyJwt(jwt, appId);
+        return new SaasyJwt(selectDecoder(app).decode(token), app != null && app.getId() != null ? app.getId(): "");
     }
 
-    private JwtDecoder selectDecoder( String appId)   {
-        if(appId != null){
-            App app = appRepo.findById(appId).block();
-            if(app != null && app.getJwkSetUri() != null && !app.getJwkSetUri().isEmpty()){
-                return NimbusJwtDecoder.withJwkSetUri(app.getJwkSetUri()).build();
-            }
+    private JwtDecoder selectDecoder(App app )   {
+        if(app != null && app.getJwkSetUri() != null && !app.getJwkSetUri().isEmpty()){
+            return NimbusJwtDecoder.withJwkSetUri(app.getJwkSetUri()).build();
         }
         return defaultJwtDecoder;
     }
