@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Braintree {
+public class BraintreeCredentials {
     private String env;
+    private String owner;
     private String merchantId;
     private String publicKey;
     private String privateKey;

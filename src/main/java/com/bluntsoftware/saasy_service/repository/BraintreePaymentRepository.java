@@ -2,7 +2,7 @@ package com.bluntsoftware.saasy_service.repository;
 
 
 import com.bluntsoftware.saasy_service.model.App;
-import com.bluntsoftware.saasy_service.model.Braintree;
+import com.bluntsoftware.saasy_service.model.BraintreeCredentials;
 import com.braintreegateway.BraintreeGateway;
 import com.braintreegateway.Environment;
 import org.springframework.stereotype.Repository;
@@ -21,9 +21,9 @@ public class BraintreePaymentRepository {
 
     public BraintreeGateway gateway(){
         App app = appRepo.findById("").block();
-        Braintree braintree = //app.getBraintree();
+        BraintreeCredentials braintree = //app.getBraintree();
 
-           Braintree.builder()
+           BraintreeCredentials.builder()
                    .merchantId("gjjbjp8r4j3m58wr")
                    .publicKey("hfwmyzbcsnq2vjfy")
                    .privateKey("1efa04a33defe0476f44e373fbf451ab").build();
